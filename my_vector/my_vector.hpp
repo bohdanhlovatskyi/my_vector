@@ -3,6 +3,8 @@
 
 #include <compare>
 #include <iterator>
+#include <algorithm>
+#include <assert.h>
 
 template<typename T>
 class my_vector_t {
@@ -75,22 +77,28 @@ public:
     // constructor of interval copy given by an iterator
     template<class ForwardIter>
     my_vector_t(ForwardIter beg, ForwardIter end) {
-        ;
+        static_assert(std::is_constructible_v<decltype(*beg)>());
+
+        size_ = end - beg;
+        capacity_ = static_cast<size_t>(2 * size_);
+        assert(capacity_ >= 0);
+        data_ = static_cast<T*>( ::operator new(capacity_ * sizeof(T)) );
+        for (auto& it = beg; it != end; ++it) {
+            construct(data_++, *it);
+        }
     }
 
     // constructor with initialization list
+    my_vector_t(std::initializer_list<T> l): my_vector_t{l.begin(), l.end()} {}
 
     // copy constructor
-    my_vector_t(const my_vector_t& vec) {
-        capacity_ = vec.size_;
-        data_ = static_cast<T*>( ::operator new(capacity_ * sizeof(T)) );
-        for (size_t i = 0; i < vec.size_; ++i) {
-            construct(data_ + i, vec[i]);
-        }
-        size_ = vec.size_;
-    }
+    my_vector_t(const my_vector_t& vec): my_vector_t(vec.begin(), vec.end()) {}
 
     // move constructor
+    template<class V>
+    my_vector_t(my_vector_t<V>&& vec): data_{std::forward<V>(vec.data_)},
+                                       size_{std::move(size)},
+                                       capacity_{std::move(capacity_)} {}
 
     // destructor
     ~my_vector_t() noexcept {
@@ -100,7 +108,15 @@ public:
         ::operator delete(data_);
     }
 
-    // assignment and move operator
+    // assignment operator
+    my_vector_t& operator=(const my_vector_t& rhs) {
+        ;
+    }
+
+    // move operator
+    my_vector_t& operator=(my_vector_t&& rhs) {
+        ;
+    }
 
     void reserve(size_t new_capacity) {
         if (new_capacity <= capacity_) {
@@ -120,6 +136,10 @@ public:
 
         swap(temp);
     }
+
+    // clear()
+
+    // resize()
 
     template<typename V>
     void push_back(V&& elm) {
@@ -146,10 +166,19 @@ public:
         --size_;
     }
 
-    // front()
+    // may cause reallocation. It is guaranteed that elements won't be changed
+    void shrink_to_fit() {
+        if (this->needs_realloc(size_, capacity_)) {
+            my_vector_t<T> vec(*this);
+            swap(vec);
+        } else {
+            // we won't reallocate
+            capacity_ = size_;
+        }
+    }
 
-    // back()
-
+    T& front() noexcept { return data_; }
+    T& back() noexcept { return data_ + size_; }
 
     T operator[](size_t idx) const {
         return data_[idx];
@@ -168,21 +197,6 @@ public:
         std::swap(capacity_, other.capacity_);
         std::swap(size_, other.size_);
     }
-
-    // may cause reallocation. It is guaranteed that elements won't be changed
-    void shrink_to_fit() {
-        if (this->needs_realloc(size_, capacity_)) {
-            my_vector_t<T> vec(*this);
-            swap(vec);
-        } else {
-            // we won't reallocate
-            capacity_ = size_;
-        }
-    }
-
-    // clear()
-
-    // resize()
 
     // stl compatible iterator
     class VecIter : public std::iterator<std::random_access_iterator_tag, T> {
@@ -234,9 +248,41 @@ public:
     reverse_iterator rbegin() { return std::reverse_iterator<T>(end()); }
     reverse_iterator rend() { return std::reverse_iterator<T>(begin()); }
 
+    // TODO: const iterators
+
+    // accepts iterator and value
     template<typename V>
-    VecIter insert(size_t pos, V&& val) {
+    VecIter insert(const VecIter& pos, V&& val) {
         ;
+    }
+
+    // accepts iterator and value
+    // TODO: how to accept any iterator
+    VecIter insert(const VecIter& pos, const VecIter& from, const VecIter& to) {
+        ;
+    }
+
+    // remove one element
+    // TODO: how should those behave if range is not valid
+    void erase(const VecIter& pos) {
+        ;
+    }
+
+    void erase(const VecIter& from, const VecIter& to) {
+        ;
+    }
+
+    // TODO: test this
+    bool operator==(const my_vector_t<T>& vec) {
+        return std::equal(this->begin(), this->end(),
+                          vec.begin(), vec.end());
+    }
+
+    // lexicographical_compare
+    // TODO: test this
+    bool operator<=>(const my_vector_t<T>& vec) {
+        return std::lexicographical_compare(this->begin(), this->end(),
+                                            vec.begin(), vec.end());
     }
 };
 
