@@ -10,12 +10,12 @@ int main(int argc, char* argv[]) {
     (void) argc; (void) argv;
 
     my_vector_t<int> vec;
-    std::cout << vec.get_size() << std::endl;
+    std::cout << vec.size() << std::endl;
     for (size_t i = 0; i < 5; ++i) {
         vec.push_back(i);
     }
 
-    for (size_t i = 0; i < vec.get_size(); ++i) {
+    for (size_t i = 0; i < vec.size(); ++i) {
         std::cout << vec[i] << ", ";
     }
     std::cout << std::endl;

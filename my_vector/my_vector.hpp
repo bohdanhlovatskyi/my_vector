@@ -1,6 +1,9 @@
 #ifndef MY_VECTOR__
 #define MY_VECTOR__
 
+#include <compare>
+#include <iterator>
+
 template<typename T>
 class my_vector_t {
 private:
@@ -24,20 +27,31 @@ private:
         arr->~T();
     }
 
-    void swap(my_vector_t<T>& other) {
-        std::swap(data_, other.data_);
-        std::swap(capacity_, other.capacity_);
-        std::swap(size_, other.size_);
+    inline static bool needs_realloc(size_t size, size_t capacity) {
+        if (capacity > static_cast<int>(size * 1.5)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    void shift_forward(T* pos, size_t dist) {
+        ;
+    }
+
+    void shift_backward(T* pos, size_t dist) {
+        ;
     }
 
 public:
 
     inline size_t size() const { return size_; }
-    inline size_t get_capacity() const { return capacity_; }
-    inline T* get_data() const { return data_; }
+    inline size_t capacity() const { return capacity_; }
+    inline T* data() const { return data_; }
+    inline bool empty() const { return size_ == 0; }
 
     // default constructor
-    my_vector_t(): my_vector_t(0) {};
+    my_vector_t(): data_{nullptr}, size_{0}, capacity_{0} {};
 
     // remember on the order of class vars initialization
     my_vector_t(size_t size): capacity_(2 * size), size_(size) {
@@ -67,17 +81,12 @@ public:
     // constructor with initialization list
 
     // copy constructor
-    // TODO : test this and maybe rewrite
     my_vector_t(const my_vector_t& vec) {
-        if (vec.size_ > capacity_) {
-            capacity_ = vec.capacity_;
-            data_ = static_cast<T*>( ::operator new(capacity_ * sizeof(T)) );
-        }
-
+        capacity_ = vec.size_;
+        data_ = static_cast<T*>( ::operator new(capacity_ * sizeof(T)) );
         for (size_t i = 0; i < vec.size_; ++i) {
             construct(data_ + i, vec[i]);
         }
-
         size_ = vec.size_;
     }
 
@@ -102,8 +111,9 @@ public:
         my_vector_t<T> temp(0, T{});
         temp.data_ = static_cast<T*>( ::operator new(new_capacity * sizeof(T)) );
         temp.capacity_ = new_capacity;
-
         for (size_t i = 0; i < size_; ++i) {
+            // node that this handles the case when element lays within
+            // the array, as the data would be still valid
             construct(temp.data_ + i, T{data_[i]});
         }
         temp.size_ = size_;
@@ -111,48 +121,123 @@ public:
         swap(temp);
     }
 
-    void push_back(const T& elm) {
+    template<typename V>
+    void push_back(V&& elm) {
 
         if (capacity_ == size_) {
-            // TODO: add check mentioned in the lecture
-            reserve(2 * capacity_);
-            construct(data_ + size_, elm);
+            // capacity_ + 1 handles the case when capacity == 0
+            reserve(2 * (capacity_ + 1));
+            construct(data_ + size_, std::forward<V>(elm));
         } else {
-            construct(data_ + size_, elm);
+            construct(data_ + size_, std::forward<V>(elm));
         }
         ++size_;
     }
 
-
+    // this won't free any memory, use shrink to fit, it necessary
     void pop_back() {
-        // consider memory freeing
+        // this little one changes from stdlib, though not sure
+        // whether this affects performance that much
+        if (size_ == 0) {
+            return;
+        }
+
         destruct(data_ + size_);
         --size_;
     }
-
 
     // front()
 
     // back()
 
-    // operator[]
 
-
-    // at (same as operator[], but throws an exception)
     T operator[](size_t idx) const {
         return data_[idx];
     }
 
-    // stl compatible iterator
-    // begin(), end(), cbegin(), cend(), rbegin(), rend(), rcbegin(), rcend()
+    T at(size_t idx) const {
+        if (idx >= size_) {
+            throw std::range_error{"Index out of bounds"};
+        }
 
-    // s_empty(), (стандартна назва таки невдала), size(), reserve(), capacity(), shrink_to_fit()
+        return data_[idx];
+    }
 
-    // swap()
+    void swap(my_vector_t<T>& other) noexcept {
+        std::swap(data_, other.data_);
+        std::swap(capacity_, other.capacity_);
+        std::swap(size_, other.size_);
+    }
+
+    // may cause reallocation. It is guaranteed that elements won't be changed
+    void shrink_to_fit() {
+        if (this->needs_realloc(size_, capacity_)) {
+            my_vector_t<T> vec(*this);
+            swap(vec);
+        } else {
+            // we won't reallocate
+            capacity_ = size_;
+        }
+    }
 
     // clear()
 
     // resize()
+
+    // stl compatible iterator
+    class VecIter : public std::iterator<std::random_access_iterator_tag, T> {
+    private:
+        T* cur;
+    public:
+        using difference_type = typename std::iterator<std::random_access_iterator_tag, T>::difference_type;
+
+        VecIter(): cur{nullptr} {}
+        VecIter(T* data_ptr): cur{data_ptr} {}
+        VecIter(const VecIter& rhs) { cur = rhs.cur; }
+
+        VecIter& operator=(VecIter& other) { cur = other.cur; return *this; }
+
+        T& operator*() { return *cur; }
+        T* operator->() { return cur; }
+        T& operator[](difference_type i) { return cur[i]; }
+
+        VecIter& operator+=(difference_type i) { cur += i; return *this; }
+        VecIter operator+(difference_type i) { return VecIter{cur + i}; }
+        VecIter& operator-=(difference_type i) { cur -= i; return *this; }
+        VecIter operator-(difference_type i) { return VecIter{cur - i}; }
+
+        difference_type operator-(const VecIter& right) const noexcept{ return cur - right.cur; }
+
+        VecIter& operator++() { cur++; return *this; }
+        VecIter& operator++(int) {
+            T tmp{*this};
+            cur++;
+            return tmp;
+        }
+
+        VecIter& operator--() { cur--; return *this; }
+        VecIter& operator--(int) {
+            T tmp{*this};
+            cur--;
+            return tmp;
+        }
+
+        bool operator==(const VecIter& it) { return *cur == *(it.cur); }
+        std::strong_ordering operator<=>(const VecIter& it) const noexcept { return *cur <=> *(it.cur); }
+
+    };
+
+    VecIter begin() noexcept(noexcept(VecIter())) { return VecIter{data_}; }
+    VecIter end() noexcept(noexcept(VecIter())) { return VecIter{data_ + size_}; }
+
+    using reverse_iterator = std::reverse_iterator<VecIter>;
+    reverse_iterator rbegin() { return std::reverse_iterator<T>(end()); }
+    reverse_iterator rend() { return std::reverse_iterator<T>(begin()); }
+
+    template<typename V>
+    VecIter insert(size_t pos, V&& val) {
+        ;
+    }
 };
 
 #include "my_vector.cpp.h"
