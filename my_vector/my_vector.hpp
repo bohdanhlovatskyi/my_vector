@@ -4,8 +4,7 @@
 template<typename T>
 class my_vector_t {
 private:
-    // TODO: is this ok?
-    constexpr static size_t DEFAULT_SIZE = 10;
+
     // TODO: consider using smart pointer
     T* data_;
     size_t capacity_;
@@ -33,12 +32,12 @@ private:
 
 public:
 
-    inline size_t get_size() { return size_; }
-    inline size_t get_capacity() { return capacity_; }
-    inline T* get_data() { return data_; }
+    inline size_t size() const { return size_; }
+    inline size_t get_capacity() const { return capacity_; }
+    inline T* get_data() const { return data_; }
 
     // default constructor
-    my_vector_t(): my_vector_t(DEFAULT_SIZE) {};
+    my_vector_t(): my_vector_t(0) {};
 
     // remember on the order of class vars initialization
     my_vector_t(size_t size): capacity_(2 * size), size_(size) {
@@ -155,15 +154,6 @@ public:
 
     // resize()
 };
-
-#ifdef DEBUG_VERSION
-template<typename T>
-std::ostream& operator<<(std::ostream& os, my_vector_t<T> vec) {
-    for (size_t i = 0; i < vec.get_size(); ++i) {
-        ;
-    }
-}
-#endif
 
 #include "my_vector.cpp.h"
 

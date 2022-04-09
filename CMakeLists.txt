@@ -7,7 +7,7 @@ cmake_minimum_required(VERSION 3.15)
 set(PROJECT_NAME template)
 project(${PROJECT_NAME} C CXX) # project(${PROJECT_NAME} C CXX ASM)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 
 ##########################################################
 # User configurable options of the template
@@ -59,6 +59,8 @@ add_executable(${PROJECT_NAME} main.cpp)
 
 #! Put path to your project headers
 target_include_directories(${PROJECT_NAME} PRIVATE my_vector)
+
+target_compile_definitions(${PROJECT_NAME} PUBLIC DEBUG_VERSION true)
 
 #! Add external packages
 # options_parser requires boost::program_options library
