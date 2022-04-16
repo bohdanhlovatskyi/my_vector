@@ -18,6 +18,7 @@ bool operator==(const my_vector_t<T>& rhs, const my_vector_t<T>& lhs) {
     return true;
 }
 
+
 // TODO: building via tests cmake does not use global cmake, so
 // this typedef won't execute
 // #ifdef DEBUG_VERSION

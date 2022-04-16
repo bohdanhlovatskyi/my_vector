@@ -182,6 +182,40 @@ TEST(TestMyVector, TestMultiInsertAtEnd) {
     ASSERT_EQ(v1, v);
 }
 
+TEST(TestMyVector, TestMultiErase) {
+    my_vector_t<int> v{2, 3, 4, 5, 6};
+    v.erase(v.begin() + 1, v.begin() + 3);
+    ASSERT_EQ(3, v.size());
+    my_vector_t<int> v1{2, 5, 6};
+    ASSERT_EQ(v1, v);
+}
+
+TEST(TestMyVector, TestMultiEraseALl) {
+    my_vector_t<int> v{2, 3, 4, 5, 6};
+    v.erase(v.begin(), v.end());
+    ASSERT_EQ(0, v.size());
+    my_vector_t<int> v1{};
+    ASSERT_EQ(v1, v);
+}
+
+TEST(TestMyVector, TestErase) {
+    my_vector_t<int> v{2, 3, 4, 5, 6};
+    v.erase(v.begin());
+    ASSERT_EQ(4, v.size());
+    my_vector_t<int> v1{3, 4, 5, 6};
+    ASSERT_EQ(v1, v);
+
+    v.erase(v.end());
+    ASSERT_EQ(3, v.size());
+    v1 = {3, 4, 5};
+    ASSERT_EQ(v1, v);
+
+    v.erase(v.begin() + 1);
+    ASSERT_EQ(2, v.size());
+    v1 = {3, 5};
+    ASSERT_EQ(v1, v);
+}
+
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();

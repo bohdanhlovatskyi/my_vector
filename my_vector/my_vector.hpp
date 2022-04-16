@@ -24,7 +24,8 @@ private:
         new(&*arr) T{};
     }
 
-    inline static void destruct(T* arr) {
+    template<class Iter>
+    inline static void destruct(Iter arr) {
         arr->~T();
     }
 
@@ -80,8 +81,23 @@ private:
         }
     }
 
-    void shift_backward(T* pos, size_t dist) {
-        ;
+    template<typename Iter>
+    void remove_block(Iter pos, size_t dist) {
+        // ..........
+        //      |||
+        size_t mv = end() - pos;
+        for (size_t i = 0; i < mv; ++i) {
+            if (pos + dist + i < end()) {
+                construct(pos + i, *(pos + dist + i));
+            } else {
+                construct(pos + i);
+            }
+        }
+
+        for (size_t i = 0; i < dist; ++i) {
+            destruct(end() - 1);
+            size_--;
+        }
     }
 
 public:
@@ -330,7 +346,7 @@ public:
         }
 
         bool operator==(const VecIter& it) { return *cur == *(it.cur); }
-        std::strong_ordering operator<=>(const VecIter& it) const noexcept { return *cur <=> *(it.cur); }
+        std::strong_ordering operator<=>(const VecIter& it) const noexcept { return cur <=> (it.cur); }
 
     };
 
@@ -367,9 +383,16 @@ public:
         }
     }
 
-    // two types of insert: iterator on pos and val (pair of iters)
-
     // analogous erase
+    template<typename Iter>
+    void erase(Iter pos) {
+        remove_block(pos, 1);
+    }
+
+    template<typename Iter>
+    void erase(Iter from, Iter to) {
+        remove_block(from, static_cast<size_t>(to - from));
+    }
 
     // ==, !=, <, <=, >, >===, !=, <, <=, >, >=
 
