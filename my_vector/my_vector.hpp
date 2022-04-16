@@ -23,8 +23,16 @@ private:
         new(arr) T{};
     }
 
-    inline static void destruct(T* arr) noexcept( noexcept(~T()) ) {
+    inline static void destruct(T* arr) {
         arr->~T();
+    }
+
+    // noexcept( noexcept(~T()) ) fails for std::string
+    // error: invalid argument type 'std::__1::basic_string<char>' to unary expression
+    inline static void destroy(T* arr, size_t size) {
+        for (size_t i = 0; i < size; ++i) {
+            destruct(arr + i);
+        }
     }
 
     inline static bool needs_realloc(size_t size, size_t capacity) {
@@ -75,13 +83,19 @@ public:
     // constructor of interval copy given by an iterator
     template<class ForwardIter>
     my_vector_t(ForwardIter beg, ForwardIter end) {
-        ;
+        ; // METHOD_MISSING
     }
 
     // constructor with initialization list
+    my_vector_t(std::initializer_list<T> ll): size_{0}, capacity_{2 * ll.size()} {
+        data_ = static_cast<T*>( ::operator new(2 * ll.size() * sizeof(T)) );
+        for (auto& elm : ll) {
+            push_back(elm);
+        }
+    }
 
     // copy constructor
-    my_vector_t(const my_vector_t& vec) {
+    my_vector_t(const my_vector_t& vec): data_{nullptr}, size_{}, capacity_{} {
         capacity_ = vec.size_;
         data_ = static_cast<T*>( ::operator new(capacity_ * sizeof(T)) );
         for (size_t i = 0; i < vec.size_; ++i) {
@@ -91,23 +105,57 @@ public:
     }
 
     // move constructor
+    my_vector_t(my_vector_t&& vec)noexcept(noexcept(~T())): \
+                size_{0}, capacity_{0}, data_{nullptr}  {
+        *this = std::move(vec);
+    }
 
     // destructor
     ~my_vector_t() noexcept {
-        for (size_t i = 0; i < size_; ++i) {
-            destruct(data_ + i);
-        }
+        destroy(data_, size_);
         ::operator delete(data_);
     }
 
     // assignment and move operator
+    my_vector_t& operator=(my_vector_t&& vec) noexcept(noexcept(~T())) {
+        if (this == &vec) {
+            return *this;
+        }
+
+        destroy(data_, size_);
+        ::operator delete(data_);
+
+        data_ = vec.data_;
+        size_ = vec.size_;
+        capacity_ = vec.capacity_;
+
+        vec.data_ = nullptr;
+        vec.size_ = 0;
+        vec.capacity_ = 0;
+
+        return *this;
+    }
+
+    my_vector_t& operator=(const my_vector_t& vec) {
+        if (this == &vec) {
+            return *this;
+        }
+
+        destroy(data_, size_);
+        size_ = vec.size_;
+        capacity_ = vec.capacity_;
+        data_ = static_cast<T*>( ::operator new(capacity_ * sizeof(T)) );
+        std::copy(vec.data_, vec.data_ + vec.size_, data_);
+
+        return *this;
+    }
 
     void reserve(size_t new_capacity) {
         if (new_capacity <= capacity_) {
             return;
         }
 
-        // TODO: this should be put in some other func
+        // TODO: this should be put in some other func -> copy to uninit
         my_vector_t<T> temp(0, T{});
         temp.data_ = static_cast<T*>( ::operator new(new_capacity * sizeof(T)) );
         temp.capacity_ = new_capacity;
@@ -146,10 +194,9 @@ public:
         --size_;
     }
 
-    // front()
+    T& front() { return data_; }
 
-    // back()
-
+    T& back() { return data_ + size_; }
 
     T operator[](size_t idx) const {
         return data_[idx];
@@ -181,6 +228,11 @@ public:
     }
 
     // clear()
+    // does not cause reallocation
+    void clear() {
+        destroy(data_, size_);
+        size_ = 0;
+    }
 
     // resize()
 
@@ -236,7 +288,11 @@ public:
 
     template<typename V>
     VecIter insert(size_t pos, V&& val) {
-        ;
+        if (pos > size_) {
+            throw std::overflow_error{"index out of bounds"};
+        }
+
+
     }
 };
 

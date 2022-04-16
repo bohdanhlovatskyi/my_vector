@@ -1,5 +1,6 @@
 #include <iostream>
 #include <vector>
+#include <string>
 
 #include "gtest/gtest.h"
 
@@ -84,21 +85,40 @@ TEST(TestMyVector, TestShrinkToFit) {
 }
 
 TEST(TestMyVector, TestSort) {
-    my_vector_t<int> vec{};
-    std::vector<int> s_vec{};
-
-    // TODO: rewrite via range cconstructor
-    vec.push_back(7);
-    s_vec.push_back(7);
-    vec.push_back(3);
-    s_vec.push_back(3);
-    vec.push_back(7);
-    s_vec.push_back(7);
+    my_vector_t<int> vec{7, 3, 7};
+    std::vector<int> s_vec{7, 3, 7};
 
     std::sort(vec.begin(), vec.end());
     std::sort(s_vec.begin(), s_vec.end());
     ASSERT_EQ(vec, s_vec);
 }
+
+TEST(TestMyVector, TestMove) {
+    my_vector_t<int> s_vec{1, 2};
+
+    my_vector_t<int> other = std::move(s_vec);
+    ASSERT_EQ(2, other.size());
+    ASSERT_EQ(0, s_vec.size());
+
+    ASSERT_EQ(nullptr, s_vec.data());
+}
+
+TEST(TestMyVector, TestCopy) {
+    my_vector_t<int> s_vec{1, 2};
+    my_vector_t<int> other = s_vec;
+    ASSERT_EQ(other, s_vec);
+
+    s_vec = {};
+    other = s_vec;
+    ASSERT_EQ(other, s_vec);
+}
+
+TEST(TestMyVector, TestClear) {
+    my_vector_t<int> s_vec{1, 2};
+    s_vec.clear();
+    ASSERT_EQ(0, s_vec.size());
+}
+
 
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);

@@ -3,6 +3,21 @@
 
 #include <iostream>
 
+template<typename T>
+bool operator==(const my_vector_t<T>& rhs, const my_vector_t<T>& lhs) {
+    if (lhs.size() != rhs.size()) {
+        return false;
+    }
+
+    for (size_t i = 0; i < rhs.size(); ++i) {
+        if (lhs[i] != rhs[i]) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 // TODO: building via tests cmake does not use global cmake, so
 // this typedef won't execute
 // #ifdef DEBUG_VERSION
