@@ -121,7 +121,7 @@ public:
 
     // constructor from n copies of given elm
     // TODO: copy of default element won't be nice here ? (code reusability)
-    my_vector_t(size_t size, T elm) {
+    my_vector_t(size_t size, const T& elm): size_{size}, capacity_{2 * size}, data_{nullptr} {
         data_ = static_cast<T*>( ::operator new(capacity_ * sizeof(T)) );
 
         for (size_t i = 0; i < size; ++i) {
@@ -130,9 +130,17 @@ public:
     };
 
     // constructor of interval copy given by an iterator
-    template<class ForwardIter>
-    my_vector_t(ForwardIter beg, ForwardIter end) {
-        ; // METHOD_MISSING
+    template<typename ForwardIter, typename = typename std::iterator_traits<ForwardIter>::value_type>
+    my_vector_t(ForwardIter beg, ForwardIter end): \
+                        size_{0}, capacity_{0}, data_{nullptr} {
+
+        size_t s = static_cast<size_t>(end - beg);
+        capacity_ = 2 * s;
+        data_ = static_cast<T*>( ::operator new(capacity_ * sizeof(T)) );
+
+        for (auto it = beg; it != end; ++it) {
+            push_back(*it);
+        }
     }
 
     // constructor with initialization list
@@ -205,7 +213,8 @@ public:
         }
 
         // TODO: this should be put in some other func -> copy to uninit
-        my_vector_t<T> temp(0, T{});
+        size_t lol = 0;
+        my_vector_t<T> temp(lol, T{});
         temp.data_ = static_cast<T*>( ::operator new(new_capacity * sizeof(T)) );
         temp.capacity_ = new_capacity;
         for (size_t i = 0; i < size_; ++i) {
@@ -224,9 +233,9 @@ public:
         if (capacity_ == size_) {
             // capacity_ + 1 handles the case when capacity == 0
             reserve(2 * (capacity_ + 1));
-            construct(data_ + size_, std::forward<V>(elm));
+            construct(data_ + size_, elm);
         } else {
-            construct(data_ + size_, std::forward<V>(elm));
+            construct(data_ + size_, elm);
         }
         ++size_;
     }
@@ -345,13 +354,14 @@ public:
             return tmp;
         }
 
-        bool operator==(const VecIter& it) { return *cur == *(it.cur); }
+        bool operator==(const VecIter& it) { return cur == (it.cur); }
         std::strong_ordering operator<=>(const VecIter& it) const noexcept { return cur <=> (it.cur); }
-
     };
 
     VecIter begin() noexcept(noexcept(VecIter())) { return VecIter{data_}; }
+
     VecIter end() noexcept(noexcept(VecIter())) { return VecIter{data_ + size_}; }
+    // VecIter<T const> cbegin()
 
     using reverse_iterator = std::reverse_iterator<VecIter>;
     reverse_iterator rbegin() { return std::reverse_iterator<T>(end()); }

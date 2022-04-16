@@ -7,7 +7,6 @@
 #include "../my_vector/my_vector.hpp"
 
 TEST(TestMyVector, TestInit) {
-
     my_vector_t<int> vec;
     std::vector<int> s_vec;
 
@@ -16,6 +15,15 @@ TEST(TestMyVector, TestInit) {
     // during creation this allow to get rid of nasty bugs with zeroing
     ASSERT_EQ(vec.capacity(), s_vec.capacity());
     ASSERT_EQ(vec.data(), s_vec.data());
+}
+
+
+TEST(TestMyVector, TestInitFromRange) {
+    my_vector_t<int> other = {3, 4, 5, 3, 5};
+    my_vector_t<int> res = {4, 5, 3};
+
+    my_vector_t<int> vec{other.begin() + 1, other.end() - 1};
+    ASSERT_EQ(res, vec);
 }
 
 TEST(TestMyVector, TestPushBack) {
@@ -29,6 +37,16 @@ TEST(TestMyVector, TestPushBack) {
 
     vec.push_back(2);
     s_vec.push_back(2);
+
+    ASSERT_EQ(s_vec, vec);
+}
+
+TEST(TestMyVector, TestPushBackString) {
+    using namespace std::string_literals;
+    my_vector_t<std::string> vec;
+    std::vector<std::string> s_vec;
+    vec.push_back("2"s);
+    s_vec.push_back("2"s);
 
     ASSERT_EQ(s_vec, vec);
 }

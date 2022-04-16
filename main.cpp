@@ -9,6 +9,14 @@
 int main(int argc, char* argv[]) {
     (void) argc; (void) argv;
 
+    my_vector_t<int> v{1, 2, 3};
+
+    my_vector_t<int> other = {3, 4, 5, 3, 5};
+    my_vector_t<int> res = {4, 5, 3};
+
+    my_vector_t<int> vec3{other.begin() + 1, other.end() - 1};
+    std::cout << "vec3: " << vec3 << std::endl;
+
     my_vector_t<int> vec;
     std::cout << vec.size() << std::endl;
     for (size_t i = 0; i < 5; ++i) {
