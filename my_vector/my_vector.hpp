@@ -353,6 +353,20 @@ public:
         construct(pos, std::forward<V>(val));
     }
 
+    template<typename Iter>
+    void insert(Iter pos, Iter from, Iter to) {
+        size_t dist = static_cast<size_t>(to - from);
+        if (size_ + dist > capacity_) {
+            reserve(std::max(size_ + dist, 2 * capacity_));
+        }
+
+        shift_forward(pos, dist);
+        while (from != to) {
+            construct(pos, *from);
+            ++pos; ++from;
+        }
+    }
+
     // two types of insert: iterator on pos and val (pair of iters)
 
     // analogous erase

@@ -155,6 +155,33 @@ TEST(TestMyVector, TestInsert) {
     ASSERT_EQ(v1, v);
 }
 
+TEST(TestMyVector, TestMultiInsert) {
+    my_vector_t<int> v{2, 3};
+    my_vector_t<int> v2{3, 4};
+    v.insert(v.begin() + 1, v2.begin(), v2.end());
+    ASSERT_EQ(4, v.size());
+    my_vector_t<int> v1{2, 3, 4, 3};
+    ASSERT_EQ(v1, v);
+}
+
+TEST(TestMyVector, TestMultiInsertAtBeginning) {
+    my_vector_t<int> v{2, 3};
+    my_vector_t<int> v2{3, 4};
+    v.insert(v.begin(), v2.begin(), v2.end());
+    ASSERT_EQ(4, v.size());
+    my_vector_t<int> v1{3, 4, 2, 3};
+    ASSERT_EQ(v1, v);
+}
+
+TEST(TestMyVector, TestMultiInsertAtEnd) {
+    my_vector_t<int> v{2, 3};
+    my_vector_t<int> v2{3, 4};
+    v.insert(v.end(), v2.begin(), v2.end());
+    ASSERT_EQ(4, v.size());
+    my_vector_t<int> v1{2, 3, 3, 4};
+    ASSERT_EQ(v1, v);
+}
+
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
