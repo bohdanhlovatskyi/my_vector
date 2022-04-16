@@ -395,6 +395,9 @@ public:
     }
 
     // ==, !=, <, <=, >, >===, !=, <, <=, >, >=
+    auto operator<=>(const my_vector_t<T>& lhs) const {
+        return data_ <=> lhs.data_;
+    };
 
 };
 

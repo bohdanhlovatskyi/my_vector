@@ -216,6 +216,28 @@ TEST(TestMyVector, TestErase) {
     ASSERT_EQ(v1, v);
 }
 
+TEST(TestMyVector, TestComparissons) {
+    my_vector_t<int> v{2, 3, 4, 5, 6};
+    my_vector_t<int> v1{3, 4, 5, 6};
+    ASSERT_TRUE(v1 > v);
+    ASSERT_TRUE(v < v1);
+    ASSERT_TRUE(!(v1 < v));
+    ASSERT_TRUE(!(v1 == v));
+    ASSERT_TRUE(v1 != v);
+    ASSERT_TRUE(v1 >= v);
+    ASSERT_TRUE(!(v1 <= v));
+
+    v = {};
+    v1 = {1};
+    ASSERT_TRUE(v1 > v);
+    ASSERT_TRUE(v < v1);
+    ASSERT_TRUE(!(v1 < v));
+    ASSERT_TRUE(!(v1 == v));
+    ASSERT_TRUE(v1 != v);
+    ASSERT_TRUE(v1 >= v);
+    ASSERT_TRUE(!(v1 <= v));
+}
+
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
