@@ -119,6 +119,41 @@ TEST(TestMyVector, TestClear) {
     ASSERT_EQ(0, s_vec.size());
 }
 
+TEST(TestMyVector, TestBack) {
+    my_vector_t<int> s_vec{1, 2};
+
+    while (s_vec.back() != 0) {
+        s_vec.push_back(s_vec.back() -1 );
+    }
+
+    my_vector_t<int> a{1, 2, 1, 0};
+    ASSERT_EQ(a, s_vec);
+}
+
+TEST(TestMyVector, TestResize) {
+    my_vector_t<int> v{1, 2};
+    ASSERT_EQ(2, v.size());
+    v.resize(5);
+    ASSERT_EQ(5, v.size());
+    ASSERT_EQ(0, v.back());
+
+    v.resize(2);
+    ASSERT_EQ(2, v.size());
+    ASSERT_EQ(2, v.back());
+
+    v.resize(3, 3);
+    ASSERT_EQ(3, v.size());
+    ASSERT_EQ(3, v.back());
+}
+
+TEST(TestMyVector, TestInsert) {
+    my_vector_t<int> v{2, 3};
+    v.insert(v.begin(), 1);
+    v.insert(v.begin() + 1, 3);
+    ASSERT_EQ(4, v.size());
+    my_vector_t<int> v1{1, 3, 2, 3};
+    ASSERT_EQ(v1, v);
+}
 
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);

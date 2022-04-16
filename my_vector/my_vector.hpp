@@ -14,13 +14,14 @@ private:
     size_t size_;
 
     // thanks Oleg Farenyuk for the idea
-    template<typename Arg>
-    inline static void construct(T* arr, const Arg& val) noexcept( noexcept(T(val)) ) {
-        new(arr) T( val );
+    template<typename Iter, class Arg>
+    inline static void construct(Iter arr, Arg&& val) noexcept( noexcept(T(val)) ) {
+        new(&*arr) T( val );
     }
 
-    inline static void construct(T* arr) noexcept {
-        new(arr) T{};
+    template<class Iter>
+    inline static void construct(Iter arr) noexcept {
+        new(&*arr) T{};
     }
 
     inline static void destruct(T* arr) {
@@ -43,8 +44,40 @@ private:
         return false;
     }
 
-    void shift_forward(T* pos, size_t dist) {
-        ;
+    // NOTE: reserve should be called before this one
+    // Credit: Oleg Farenyuk
+    template<typename Iter>
+    void shift_forward(Iter pos, size_t dist) {
+        size_t mv_elm_c = end() - pos;
+        ptrdiff_t hs = dist - mv_elm_c;
+
+        // ..........
+        //       ||||||....
+        if (hs > 0) {
+            // fill hole with default initialized values
+            for (size_t i = 0; i < static_cast<size_t>(hs); ++i) {
+                construct(end());
+                size_++;
+            }
+
+            for (size_t i = 0; i < mv_elm_c; ++i) {
+                construct(end(), *(pos + i));
+                size_++;
+            }
+
+            return;
+        }
+
+        // ..........
+        //     ||||......
+        for (size_t i = 0; i < dist; ++i) {
+            construct(end(), *(end() - dist));
+            size_++;
+        }
+
+        for (size_t i = -hs; i > 0; --i) {
+            construct(pos + dist + i - 1, *(pos + i - 1));
+        }
     }
 
     void shift_backward(T* pos, size_t dist) {
@@ -182,6 +215,13 @@ public:
         ++size_;
     }
 
+
+    template<typename V>
+    void emplace_back() {
+        ; // METHOD_MISSING
+    }
+
+
     // this won't free any memory, use shrink to fit, it necessary
     void pop_back() {
         // this little one changes from stdlib, though not sure
@@ -194,9 +234,9 @@ public:
         --size_;
     }
 
-    T& front() { return data_; }
+    T& front() { return *data_; }
 
-    T& back() { return data_ + size_; }
+    T& back() { return *(data_ + size_ - 1); }
 
     T operator[](size_t idx) const {
         return data_[idx];
@@ -235,12 +275,27 @@ public:
     }
 
     // resize()
+    void resize(size_t n, T val = T{}) {
+        // if n is less than the current size
+        while (size_ > n) {
+            destruct(data_ + size_);
+            --size_;
+        }
+
+        reserve(n);
+        auto to_add = n - size_;
+        for (size_t i = 0; i < to_add; ++i) {
+            push_back(val);
+        }
+    }
 
     // stl compatible iterator
     class VecIter : public std::iterator<std::random_access_iterator_tag, T> {
     private:
-        T* cur;
+        ;
     public:
+        T* cur;
+
         using difference_type = typename std::iterator<std::random_access_iterator_tag, T>::difference_type;
 
         VecIter(): cur{nullptr} {}
@@ -286,14 +341,24 @@ public:
     reverse_iterator rbegin() { return std::reverse_iterator<T>(end()); }
     reverse_iterator rend() { return std::reverse_iterator<T>(begin()); }
 
-    template<typename V>
-    VecIter insert(size_t pos, V&& val) {
-        if (pos > size_) {
-            throw std::overflow_error{"index out of bounds"};
+    // METHOD_MISSING: const iterators rcbegin, rcenc;
+
+    template<typename Iter, class V>
+    void insert(Iter pos, V&& val) {
+        if (size_ + 1 > capacity_) {
+            reserve(2 * capacity_);
         }
 
-
+        shift_forward(pos, 1);
+        construct(pos, std::forward<V>(val));
     }
+
+    // two types of insert: iterator on pos and val (pair of iters)
+
+    // analogous erase
+
+    // ==, !=, <, <=, >, >===, !=, <, <=, >, >=
+
 };
 
 #include "my_vector.cpp.h"

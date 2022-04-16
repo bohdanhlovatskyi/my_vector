@@ -26,6 +26,8 @@ int main(int argc, char* argv[]) {
         vec2.push_back(i);
     }
 
+    vec2[2] = 9;
+
     for (size_t i = 0; i < vec2.size(); ++i) {
         std::cout << vec2[i] << ", ";
     }
