@@ -41,6 +41,17 @@ TEST(TestMyVector, TestPushBack) {
     ASSERT_EQ(s_vec, vec);
 }
 
+TEST(TestMyVector, TestEmplaceBack) {
+
+    my_vector_t<std::pair<int, std::string>> vec;
+    std::vector<std::pair<int, std::string>> s_vec;
+
+    s_vec.emplace_back(4, "f");
+    vec.emplace_back(4, "f");
+
+    ASSERT_EQ(s_vec, vec);
+}
+
 TEST(TestMyVector, TestPushBackString) {
     using namespace std::string_literals;
     my_vector_t<std::string> vec;
@@ -254,6 +265,19 @@ TEST(TestMyVector, TestComparissons) {
     ASSERT_TRUE(v1 != v);
     ASSERT_TRUE(v1 >= v);
     ASSERT_TRUE(!(v1 <= v));
+}
+
+TEST(TestMyVector, TestIterators) {
+    my_vector_t<int> v{2, 3, 4, 5, 6};
+    ASSERT_EQ(v.size(), std::distance(v.begin(), v.end()));
+
+    my_vector_t<int>::iterator it = v.begin();
+    (*it) += 10;
+    ASSERT_EQ(12, v[0]);
+    ASSERT_EQ(v.begin() + 1, it + 1);
+
+    my_vector_t<int>::const_iterator cit = v.cbegin();
+    ASSERT_EQ(v.cbegin() + 1, cit + 1);
 }
 
 int main(int argc, char **argv) {

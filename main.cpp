@@ -41,5 +41,9 @@ int main(int argc, char* argv[]) {
     }
     std::cout << std::endl;
 
+    my_vector_t<int> K{2, 3, 4, 5, 6};
+    my_vector_t<int> K1{3, 4, 5, 6};
+    std::cout << (K1 > K) << std::endl;
+
     return 0;
 }

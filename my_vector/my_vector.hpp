@@ -240,10 +240,9 @@ public:
         ++size_;
     }
 
-
-    template<typename V>
-    void emplace_back() {
-        ; // METHOD_MISSING
+    template<typename ...Args>
+    void emplace_back(Args&&... args) {
+        push_back(std::forward<T>(T{args...}));
     }
 
 
@@ -315,23 +314,24 @@ public:
     }
 
     // stl compatible iterator
-    class VecIter : public std::iterator<std::random_access_iterator_tag, T> {
+    template<typename C>
+    class VecIter : public std::iterator<std::random_access_iterator_tag, C> {
     private:
         ;
     public:
-        T* cur;
+        C* cur;
 
-        using difference_type = typename std::iterator<std::random_access_iterator_tag, T>::difference_type;
+        using difference_type = typename std::iterator<std::random_access_iterator_tag, C>::difference_type;
 
         VecIter(): cur{nullptr} {}
-        VecIter(T* data_ptr): cur{data_ptr} {}
+        VecIter(C* data_ptr): cur{data_ptr} {}
         VecIter(const VecIter& rhs) { cur = rhs.cur; }
 
         VecIter& operator=(VecIter& other) { cur = other.cur; return *this; }
 
-        T& operator*() { return *cur; }
-        T* operator->() { return cur; }
-        T& operator[](difference_type i) { return cur[i]; }
+        C& operator*() { return *cur; }
+        C* operator->() { return cur; }
+        C& operator[](difference_type i) { return cur[i]; }
 
         VecIter& operator+=(difference_type i) { cur += i; return *this; }
         VecIter operator+(difference_type i) { return VecIter{cur + i}; }
@@ -342,32 +342,42 @@ public:
 
         VecIter& operator++() { cur++; return *this; }
         VecIter& operator++(int) {
-            T tmp{*this};
+            C tmp{*this};
             cur++;
             return tmp;
         }
 
         VecIter& operator--() { cur--; return *this; }
         VecIter& operator--(int) {
-            T tmp{*this};
+            C tmp{*this};
             cur--;
             return tmp;
         }
 
-        bool operator==(const VecIter& it) { return cur == (it.cur); }
-        std::strong_ordering operator<=>(const VecIter& it) const noexcept { return cur <=> (it.cur); }
+        friend bool operator==(const VecIter& it1, const VecIter& it2) {
+            return it1.cur == it2.cur;
+        }
+
+        friend auto operator<=>(const VecIter& it1, const VecIter& it2) {
+            return it1.cur <=> it2.cur;
+        }
     };
 
-    VecIter begin() noexcept(noexcept(VecIter())) { return VecIter{data_}; }
+    using iterator = VecIter<T>;
+    iterator begin() { return iterator{data_}; }
+    iterator end() { return iterator{data_ + size_}; }
 
-    VecIter end() noexcept(noexcept(VecIter())) { return VecIter{data_ + size_}; }
-    // VecIter<T const> cbegin()
+    using reverse_iterator = std::reverse_iterator<VecIter<T>>;
+    reverse_iterator rbegin() { return std::reverse_iterator(end()); }
+    reverse_iterator rend() { return std::reverse_iterator(begin()); }
 
-    using reverse_iterator = std::reverse_iterator<VecIter>;
-    reverse_iterator rbegin() { return std::reverse_iterator<T>(end()); }
-    reverse_iterator rend() { return std::reverse_iterator<T>(begin()); }
+    using const_iterator = VecIter<const T>;
+    const_iterator cbegin() { return const_iterator{data_}; }
+    const_iterator cend() { return const_iterator{data_ + size_}; }
 
-    // METHOD_MISSING: const iterators rcbegin, rcenc;
+    using reverse_const_iterator = std::reverse_iterator<VecIter<const T>>;
+    reverse_const_iterator rcbegin() {  return std::reverse_iterator(cend()); }
+    reverse_const_iterator rcend() { return std::reverse_iterator(cbegin()); }
 
     template<typename Iter, class V>
     void insert(Iter pos, V&& val) {
@@ -405,9 +415,24 @@ public:
     }
 
     // ==, !=, <, <=, >, >===, !=, <, <=, >, >=
-    auto operator<=>(const my_vector_t<T>& lhs) const {
-        return data_ <=> lhs.data_;
+    friend auto operator<=>(const my_vector_t& rhs, const my_vector_t<T>& lhs) {
+        return rhs.data_ <=> lhs.data_;
     };
+
+
+    friend bool operator==(const my_vector_t& rhs, const my_vector_t& lhs) {
+        if (lhs.size() != rhs.size()) {
+            return false;
+        }
+
+        for (size_t i = 0; i < rhs.size(); ++i) {
+            if (lhs[i] != rhs[i]) {
+                return false;
+            }
+        }
+
+        return true;
+    }
 
 };
 
