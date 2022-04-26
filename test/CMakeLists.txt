@@ -18,7 +18,7 @@ enable_testing()
 
 add_executable(
         ${PROJECT_NAME}
-        main_array.cpp
+        main.cpp
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE ../my_vector ../my_array)

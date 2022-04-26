@@ -106,8 +106,8 @@ public:
 
     inline size_t size() const { return size_; }
     inline size_t capacity() const { return capacity_; }
-    inline const T& data() const { return data_; }
-    inline T& data() { return data_; }
+    inline const T* data() const { return data_; }
+    inline T* data() { return data_; }
     inline bool empty() const { return size_ == 0; }
 
     // default constructor
