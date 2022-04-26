@@ -3,6 +3,7 @@
 
 #include <compare>
 #include <iterator>
+#include <type_traits>
 
 template<typename T, size_t N>
 class my_array_t {
@@ -38,7 +39,14 @@ private:
 public:
 
     inline size_t size() const { return N; }
-    inline T* data() const { return data_; }
+    inline const T& data() const noexcept { return data_; }
+
+    // may or may not return nullptr if N == 0
+    inline T& data() noexcept { return data_; }
+
+    // default initializer, leaves the elements of data uninitialized
+    // to request default value initialization, call my_array_t a{};
+    my_array_t(): data_{static_cast<T*>( ::operator new(N * sizeof(T)) )} {}
 
     // constructor with initialization list
     my_array_t(std::initializer_list<T> ll): \
@@ -76,20 +84,51 @@ public:
 
     T& back() { return *(data_ + N - 1); }
 
-    T operator[](size_t idx) const {
+    T& operator[](size_t idx) {
         return data_[idx];
     }
 
-    T at(size_t idx) const {
+    const T& operator[](size_t idx) const {
+        return data_[idx];
+    }
+
+    T& at(size_t idx) {
         if (idx >= N) {
-            throw std::range_error{"Index out of bounds"};
+            throw std::out_of_range{"at out of range"};
         }
 
         return data_[idx];
     }
 
-    void swap(my_array_t& other) noexcept {
-        std::swap(data_, other.data_);
+    const T& at(size_t idx) const {
+        if (idx >= N) {
+            throw std::out_of_range{"at out of range"};
+        }
+
+        return data_[idx];
+    }
+
+    constexpr void fill(const T& elm) {
+        destroy(data_, N);
+        for (size_t i = 0; i < N; ++i) {
+            construct(data_ + i, elm);
+        }
+    }
+
+    // O_o swap for array is linear, who could imagine that ? 
+    void swap(my_array_t& other) noexcept (std::is_nothrow_swappable_v<T>) {
+        my_array_t<T, N> tmp;
+        for (size_t i = 0; i < other.size(); ++i) {
+            tmp[i] = data_[i];
+        }
+
+        for (size_t i = 0; i < other.size(); ++i) {
+            data_[i] = other.data_[i];
+        }
+
+        for (size_t i = 0; i < other.size(); ++i) {
+            other.data_[i] = tmp.data_[i];
+        }
     }
 
     // stl compatible iterator
@@ -176,5 +215,15 @@ public:
     }
 
 };
+
+template<class T, std::size_t N>
+constexpr my_array_t<std::remove_cv_t<T>, N> to_array(T (&a)[N]) { 
+    my_array_t<std::remove_cv_t<T>, N> arr;
+    for (size_t i = 0; i < N; ++i) {
+        arr[i] = a[i];
+    }
+
+    return arr;
+}
 
 #endif // MY_ARRAY__

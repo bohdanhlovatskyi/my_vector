@@ -106,7 +106,8 @@ public:
 
     inline size_t size() const { return size_; }
     inline size_t capacity() const { return capacity_; }
-    inline T* data() const { return data_; }
+    inline const T& data() const { return data_; }
+    inline T& data() { return data_; }
     inline bool empty() const { return size_ == 0; }
 
     // default constructor
@@ -255,13 +256,25 @@ public:
 
     T& back() { return *(data_ + size_ - 1); }
 
-    T operator[](size_t idx) const {
+    T& operator[](size_t idx) {
         return data_[idx];
     }
 
-    T at(size_t idx) const {
+    const T& operator[](size_t idx) const {
+        return data_[idx];
+    }
+
+    T& at(size_t idx) {
         if (idx >= size_) {
-            throw std::range_error{"Index out of bounds"};
+            throw std::out_of_range{"at out of range"};
+        }
+
+        return data_[idx];
+    }
+
+    const T& at(size_t idx) const {
+        if (idx >= size_) {
+            throw std::out_of_range{"at out of range"};
         }
 
         return data_[idx];
