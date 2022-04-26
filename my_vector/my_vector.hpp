@@ -7,31 +7,33 @@
 template<typename T>
 class my_vector_t {
 private:
-
-    // TODO: consider using smart pointer
-    T* data_;
-    size_t capacity_;
+    // there are some funcs below that rely on this order, you
+    // should not change it
     size_t size_;
+    size_t capacity_;
+    T* data_;
 
     // thanks Oleg Farenyuk for the idea
     template<typename Iter, class Arg>
-    inline static void construct(Iter arr, Arg&& val) noexcept( noexcept(T(val)) ) {
+    inline static void construct(Iter arr, const Arg& val) noexcept( noexcept(T{val}) ) {
         new(&*arr) T( val );
     }
 
+    // this relies on the convention that user will not provide
+    // a type with destructor that could throw an exception
     template<class Iter>
     inline static void construct(Iter arr) noexcept {
         new(&*arr) T{};
     }
 
     template<class Iter>
-    inline static void destruct(Iter arr) {
+    inline static void destruct(Iter arr) noexcept {
         arr->~T();
     }
 
     // noexcept( noexcept(~T()) ) fails for std::string
     // error: invalid argument type 'std::__1::basic_string<char>' to unary expression
-    inline static void destroy(T* arr, size_t size) {
+    inline static void destroy(T* arr, size_t size) noexcept {
         for (size_t i = 0; i < size; ++i) {
             destruct(arr + i);
         }
@@ -109,60 +111,55 @@ public:
 
     // default constructor
     my_vector_t(): data_{nullptr}, size_{0}, capacity_{0} {};
-
-    // remember on the order of class vars initialization
-    my_vector_t(size_t size): capacity_(2 * size), size_(size) {
-        data_ = static_cast<T*>( ::operator new(capacity_ * sizeof(T)) );
-
-        for (size_t i = 0; i < size_; ++i) {
-            construct(data_ + i);
-        }
-    };
+    my_vector_t(size_t size): my_vector_t(size, T{}) {}
 
     // constructor from n copies of given elm
-    // TODO: copy of default element won't be nice here ? (code reusability)
-    my_vector_t(size_t size, const T& elm): size_{size}, capacity_{2 * size}, data_{nullptr} {
-        data_ = static_cast<T*>( ::operator new(capacity_ * sizeof(T)) );
-
+    // note: apparently it would indeed be better to move this into
+    // some memory management class rather than rely on the order
+    // of the member initialization :+)
+    my_vector_t(size_t size, const T& elm): size_{size}, capacity_{2 * size},
+            data_{static_cast<T*>( ::operator new(capacity_ * sizeof(T)) )}
+    {
         for (size_t i = 0; i < size; ++i) {
             construct(data_ + i, elm);
         }
     };
 
     // constructor of interval copy given by an iterator
-    template<typename ForwardIter, typename = typename std::iterator_traits<ForwardIter>::value_type>
+    template<typename ForwardIter,
+             typename = typename std::iterator_traits<ForwardIter>::value_type>
     my_vector_t(ForwardIter beg, ForwardIter end): \
-                        size_{0}, capacity_{0}, data_{nullptr} {
-
-        size_t s = static_cast<size_t>(end - beg);
-        capacity_ = 2 * s;
-        data_ = static_cast<T*>( ::operator new(capacity_ * sizeof(T)) );
-
+                        size_{0},
+                        capacity_{2 * (static_cast<size_t>(end - beg))},
+                        data_{static_cast<T*>( ::operator new(capacity_ * sizeof(T)) )}
+    {
         for (auto it = beg; it != end; ++it) {
+            // *it would be rvalue anyway
             push_back(*it);
         }
     }
 
     // constructor with initialization list
-    my_vector_t(std::initializer_list<T> ll): size_{0}, capacity_{2 * ll.size()} {
-        data_ = static_cast<T*>( ::operator new(2 * ll.size() * sizeof(T)) );
-        for (auto& elm : ll) {
+    my_vector_t(std::initializer_list<T> ll): \
+                size_{0}, capacity_{2 * ll.size()},
+                data_{static_cast<T*>( ::operator new(capacity_ * sizeof(T)) )}
+    {
+        for (const auto& elm : ll) {
             push_back(elm);
         }
     }
 
     // copy constructor
-    my_vector_t(const my_vector_t& vec): data_{nullptr}, size_{}, capacity_{} {
-        capacity_ = vec.size_;
-        data_ = static_cast<T*>( ::operator new(capacity_ * sizeof(T)) );
+    my_vector_t(const my_vector_t& vec): \
+                size_{vec.size_}, capacity_{vec.size_},
+                data_{static_cast<T*>( ::operator new(capacity_ * sizeof(T)) )} {
         for (size_t i = 0; i < vec.size_; ++i) {
             construct(data_ + i, vec[i]);
         }
-        size_ = vec.size_;
     }
 
     // move constructor
-    my_vector_t(my_vector_t&& vec)noexcept(noexcept(~T())): \
+    my_vector_t(my_vector_t&& vec) noexcept(noexcept(~T())) : \
                 size_{0}, capacity_{0}, data_{nullptr}  {
         *this = std::move(vec);
     }
@@ -212,9 +209,7 @@ public:
             return;
         }
 
-        // TODO: this should be put in some other func -> copy to uninit
-        size_t lol = 0;
-        my_vector_t<T> temp(lol, T{});
+        my_vector_t<T> temp(0, T{});
         temp.data_ = static_cast<T*>( ::operator new(new_capacity * sizeof(T)) );
         temp.capacity_ = new_capacity;
         for (size_t i = 0; i < size_; ++i) {
@@ -227,15 +222,14 @@ public:
         swap(temp);
     }
 
-    template<typename V>
-    void push_back(V&& elm) {
-
+    template<typename X>
+    void push_back(X&& elm) {
         if (capacity_ == size_) {
             // capacity_ + 1 handles the case when capacity == 0
             reserve(2 * (capacity_ + 1));
-            construct(data_ + size_, elm);
+            construct(data_ + size_, std::forward<X>(elm));
         } else {
-            construct(data_ + size_, elm);
+            construct(data_ + size_, std::forward<X>(elm));
         }
         ++size_;
     }
@@ -244,7 +238,6 @@ public:
     void emplace_back(Args&&... args) {
         push_back(std::forward<T>(T{args...}));
     }
-
 
     // this won't free any memory, use shrink to fit, it necessary
     void pop_back() {
@@ -317,10 +310,8 @@ public:
     template<typename C>
     class VecIter : public std::iterator<std::random_access_iterator_tag, C> {
     private:
-        ;
-    public:
         C* cur;
-
+    public:
         using difference_type = typename std::iterator<std::random_access_iterator_tag, C>::difference_type;
 
         VecIter(): cur{nullptr} {}
