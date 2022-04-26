@@ -16,6 +16,8 @@ FetchContent_MakeAvailable(googletest)
 
 enable_testing()
 
+# set(CMAKE_OSX_SYSROOT /sdk/path)
+
 add_executable(
         ${PROJECT_NAME}
         main.cpp

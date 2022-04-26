@@ -1,3 +1,6 @@
+// This is a personal academic project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: http://www.viva64.com
+
 #include <iostream>
 #include <vector>
 #include <string>
@@ -10,8 +13,7 @@
 
 TEST(TestMyArray, TestInit) {
     my_array_t<int, 3> arr = {1, 2, 3};
-    
-    ASSERT_EQ(3, arr.size());
+   
     ASSERT_EQ(1, arr[0]);
     ASSERT_EQ(2, arr[1]);
     ASSERT_EQ(3, arr[2]);

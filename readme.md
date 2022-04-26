@@ -28,7 +28,9 @@ For MacOS / Linux, GTest installation is trivial (simply use your packet manager
 
 ### Important!
 
-Everything was tested only on MacOS, thus no Valgrind, no PVSStudio and no proper installation guide.
+PVSStudio does not give any error below MISRA standard.
+Valgrind seems OK, though it could be that it works poorly on MacOS
+AS everything was tested only on MacOS, it may lack some headers ((.
 
 ### Results
 

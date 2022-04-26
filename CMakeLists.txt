@@ -34,7 +34,7 @@ set(ENABLE_UBSan OFF)
 #! AddressSanitizer -- detects use after free or after scope exit,
 #  memory overflows and leaks.  
 #  Info: https://github.com/google/sanitizers/wiki/AddressSanitizer
-set(ENABLE_ASAN OFF)
+set(ENABLE_ASAN ON)
 #! ThreadSanitizer -- detects data races.
 set(ENABLE_TSan OFF)
 #! MemorySanitizer detects uninitialized memory reads 
@@ -55,13 +55,12 @@ include(cmake/CompilerWarnings.cmake)
 ##########################################################
 
 #! Project main executable source compilation
-add_executable(${PROJECT_NAME} main.cpp)
+add_executable(${PROJECT_NAME} main.cpp my_vector/my_vector.hpp my_array/my_array.hpp)
 
 #! Put path to your project headers
 target_include_directories(${PROJECT_NAME} PRIVATE my_vector my_array)
 
 target_compile_definitions(${PROJECT_NAME} PUBLIC DEBUG_VERSION true)
-
 						
 ##########################################################
 # Fixed CMakeLists.txt part 

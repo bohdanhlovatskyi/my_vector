@@ -1,3 +1,5 @@
+// This is a personal academic project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: http://www.viva64.com
 #ifndef MY_ARRAY__
 #define MY_ARRAY__
 
@@ -93,6 +95,8 @@ public:
     }
 
     T& at(size_t idx) {
+        size_t k  = 10;
+
         if (idx >= N) {
             throw std::out_of_range{"at out of range"};
         }
