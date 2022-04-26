@@ -18,10 +18,10 @@ enable_testing()
 
 add_executable(
         ${PROJECT_NAME}
-        main.cpp
+        main_array.cpp
 )
 
-target_include_directories(${PROJECT_NAME} PRIVATE ../my_vector)
+target_include_directories(${PROJECT_NAME} PRIVATE ../my_vector ../my_array)
 
 target_link_libraries(
         ${PROJECT_NAME}

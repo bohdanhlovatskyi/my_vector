@@ -58,7 +58,7 @@ include(cmake/CompilerWarnings.cmake)
 add_executable(${PROJECT_NAME} main.cpp)
 
 #! Put path to your project headers
-target_include_directories(${PROJECT_NAME} PRIVATE my_vector)
+target_include_directories(${PROJECT_NAME} PRIVATE my_vector my_array)
 
 target_compile_definitions(${PROJECT_NAME} PUBLIC DEBUG_VERSION true)
 

@@ -22,7 +22,7 @@ private:
     // this relies on the convention that user will not provide
     // a type with destructor that could throw an exception
     template<class Iter>
-    inline static void construct(Iter arr) noexcept {
+    inline static void construct(Iter arr) noexcept ( noexcept(T{}) ) {
         new(&*arr) T{};
     }
 
